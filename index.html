@@ -1,0 +1,373 @@
+<!doctype html>
+<html lang="zh-TW">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>OceanGuard 多元智慧箱網養殖防災系統</title>
+    <link rel="stylesheet" href="css/styles.css" />
+    <!-- ECharts CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+    <!-- Font Awesome for icons -->
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+    <!-- Google Fonts -->
+    <link
+      href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Noto+Sans+TC:wght@300;400;500;700&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+  <body>
+    <!-- Header -->
+    <header class="main-header">
+      <div class="header-left">
+        <div class="logo">
+          <i class="fas fa-water"></i>
+          <span class="logo-text" data-i18n="systemName"
+            >OceanGuard 多元智慧箱網養殖防災系統</span
+          >
+        </div>
+      </div>
+      <div class="header-center">
+        <div class="system-status">
+          <span class="status-dot online"></span>
+          <span data-i18n="systemOnline">系統運行中</span>
+        </div>
+        <div class="current-time" id="currentTime"></div>
+      </div>
+      <div class="header-right">
+        <div class="satellite-status">
+          <div class="sat-item geo">
+            <span>GEO</span>
+            <div class="signal-bars">
+              <span class="bar active"></span>
+              <span class="bar active"></span>
+              <span class="bar active"></span>
+              <span class="bar active"></span>
+            </div>
+          </div>
+          <div class="sat-item leo">
+            <span>LEO</span>
+            <div class="signal-bars">
+              <span class="bar active"></span>
+              <span class="bar active"></span>
+              <span class="bar"></span>
+              <span class="bar"></span>
+            </div>
+          </div>
+        </div>
+        <div class="lang-switch">
+          <button class="lang-btn active" data-lang="zh">中</button>
+          <button class="lang-btn" data-lang="en">EN</button>
+        </div>
+      </div>
+    </header>
+
+    <!-- KPI Cards Row -->
+    <section class="kpi-section">
+      <div class="kpi-card">
+        <div class="kpi-icon"><i class="fas fa-coins"></i></div>
+        <div class="kpi-content">
+          <div class="kpi-label" data-i18n="totalAssets">總資產價值</div>
+          <div class="kpi-value">NT$ <span id="kpiAssets">2,580,000</span></div>
+          <div class="kpi-trend up"><i class="fas fa-arrow-up"></i> +3.2%</div>
+        </div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-icon"><i class="fas fa-fish"></i></div>
+        <div class="kpi-content">
+          <div class="kpi-label" data-i18n="survivalRate">目前存活率</div>
+          <div class="kpi-value"><span id="kpiSurvival">98.5</span>%</div>
+          <div class="kpi-trend up"><i class="fas fa-arrow-up"></i> +0.5%</div>
+        </div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-icon"><i class="fas fa-satellite"></i></div>
+        <div class="kpi-content">
+          <div class="kpi-label" data-i18n="commStatus">通訊鏈路狀態</div>
+          <div class="kpi-value status-online" data-i18n="geoOnline">
+            GEO 在線
+          </div>
+          <div class="kpi-sub" data-i18n="latency">延遲: 280ms</div>
+        </div>
+      </div>
+      <div class="kpi-card warning" id="warningCard">
+        <div class="kpi-icon"><i class="fas fa-exclamation-triangle"></i></div>
+        <div class="kpi-content">
+          <div class="kpi-label" data-i18n="warningCountdown">預警倒數</div>
+          <div class="kpi-value"><span id="kpiCountdown">06:32:15</span></div>
+          <div class="kpi-sub" data-i18n="coldWaveApproaching">
+            寒流前緣逼近
+          </div>
+        </div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-icon"><i class="fas fa-piggy-bank"></i></div>
+        <div class="kpi-content">
+          <div class="kpi-label" data-i18n="feedSaving">今日省餌成本</div>
+          <div class="kpi-value"><span id="kpiFeedSaving">-25</span>%</div>
+          <div class="kpi-sub">≈ NT$ 12,500</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Main Dashboard Grid -->
+    <main class="dashboard-grid">
+      <!-- Left Column -->
+      <div class="dashboard-column left-column">
+        <!-- Water Temperature Chart -->
+        <div class="panel" id="tempPanel">
+          <div class="panel-header">
+            <h3>
+              <i class="fas fa-temperature-high"></i>
+              <span data-i18n="waterTempTrend">水溫趨勢圖</span>
+            </h3>
+            <div class="panel-status">
+              <span class="delta-label">ΔT/hr:</span>
+              <span class="delta-value warning" id="deltaT">-0.8°C</span>
+            </div>
+          </div>
+          <div class="panel-body">
+            <div id="tempChart" class="chart-container"></div>
+          </div>
+        </div>
+
+        <!-- Dissolved Oxygen Chart -->
+        <div class="panel" id="doPanel">
+          <div class="panel-header">
+            <h3>
+              <i class="fas fa-wind"></i>
+              <span data-i18n="dissolvedOxygen">溶氧量 (DO) 曲線</span>
+            </h3>
+            <div class="panel-status">
+              <span class="risk-label" data-i18n="hypoxiaRisk">缺氧風險:</span>
+              <span class="risk-value low" id="doRisk" data-i18n="low">低</span>
+            </div>
+          </div>
+          <div class="panel-body">
+            <div id="doChart" class="chart-container"></div>
+          </div>
+        </div>
+
+        <!-- Residual Bait Detection -->
+        <div class="panel" id="feedPanel">
+          <div class="panel-header">
+            <h3>
+              <i class="fas fa-drumstick-bite"></i>
+              <span data-i18n="residualBait">殘餌偵測</span>
+            </h3>
+          </div>
+          <div class="panel-body feed-panel-body">
+            <div class="feed-stats">
+              <div class="feed-stat">
+                <div class="stat-label" data-i18n="currentResidual">
+                  目前殘餌率
+                </div>
+                <div class="stat-value" id="residualRate">12%</div>
+              </div>
+              <div class="feed-stat">
+                <div class="stat-label" data-i18n="aiRecommend">
+                  AI 建議減餵
+                </div>
+                <div class="stat-value recommend" id="feedRecommend">25%</div>
+              </div>
+            </div>
+            <div id="feedChart" class="chart-container-small"></div>
+            <button class="action-btn secondary" id="applyFeedBtn">
+              <i class="fas fa-check"></i>
+              <span data-i18n="applyStrategy">執行建議策略</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Center Column - Digital Twin Map -->
+      <div class="dashboard-column center-column">
+        <div class="panel map-panel">
+          <div class="panel-header">
+            <h3>
+              <i class="fas fa-map-marked-alt"></i>
+              <span data-i18n="digitalTwin">Digital Twin 即時監控</span>
+            </h3>
+            <div class="map-controls">
+              <button class="map-btn active" data-layer="all" data-i18n="all">
+                全部
+              </button>
+              <button class="map-btn" data-layer="temp" data-i18n="sst">
+                SST
+              </button>
+              <button class="map-btn" data-layer="current" data-i18n="current">
+                海流
+              </button>
+            </div>
+          </div>
+          <div class="panel-body map-body">
+            <div id="mapChart" class="map-container"></div>
+            <!-- Map Legend -->
+            <div class="map-legend">
+              <div class="legend-item">
+                <span class="legend-icon vessel"
+                  ><i class="fas fa-ship"></i
+                ></span>
+                <span data-i18n="workVessel">作業船</span>
+              </div>
+              <div class="legend-item">
+                <span class="legend-icon cage normal"></span>
+                <span data-i18n="normalCage">箱網(正常)</span>
+              </div>
+              <div class="legend-item">
+                <span class="legend-icon cage warning"></span>
+                <span data-i18n="warningCage">箱網(警戒)</span>
+              </div>
+              <div class="legend-item">
+                <span class="legend-icon cage danger"></span>
+                <span data-i18n="dangerCage">箱網(危險)</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- AI Recognition Window -->
+        <div class="panel ai-panel">
+          <div class="panel-header">
+            <h3>
+              <i class="fas fa-brain"></i>
+              <span data-i18n="aiRecognition">AI 辨識視窗</span>
+            </h3>
+            <div class="ai-mode">
+              <span class="mode-badge" data-i18n="digitalTwinMode"
+                >Digital Twin 模式</span
+              >
+            </div>
+          </div>
+          <div class="panel-body ai-body">
+            <div class="ai-metrics">
+              <div class="ai-metric">
+                <span class="metric-label" data-i18n="fishActivity"
+                  >魚群活動力</span
+                >
+                <div class="metric-bar">
+                  <div
+                    class="bar-fill high"
+                    id="activityBar"
+                    style="width: 78%"
+                  ></div>
+                </div>
+                <span class="metric-value" id="activityValue">78%</span>
+              </div>
+              <div class="ai-metric">
+                <span class="metric-label" data-i18n="growthRate"
+                  >成長評估</span
+                >
+                <div class="metric-value growth" id="growthValue">+2.3%/週</div>
+              </div>
+              <div class="ai-metric">
+                <span class="metric-label" data-i18n="fishDensity"
+                  >魚群密度</span
+                >
+                <div id="densityChart" class="mini-chart"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right Column -->
+      <div class="dashboard-column right-column">
+        <!-- Device Status Panel -->
+        <div class="panel" id="devicePanel">
+          <div class="panel-header">
+            <h3>
+              <i class="fas fa-microchip"></i>
+              <span data-i18n="deviceStatus">設備狀態監控</span>
+            </h3>
+          </div>
+          <div class="panel-body device-body">
+            <div class="device-list" id="deviceList">
+              <!-- Devices will be populated by JS -->
+            </div>
+          </div>
+        </div>
+
+        <!-- Heartbeat & Connection Health -->
+        <div class="panel" id="heartbeatPanel">
+          <div class="panel-header">
+            <h3>
+              <i class="fas fa-heartbeat"></i>
+              <span data-i18n="heartbeat">心跳包狀態</span>
+            </h3>
+          </div>
+          <div class="panel-body">
+            <div id="heartbeatChart" class="chart-container-small"></div>
+          </div>
+        </div>
+
+        <!-- Downlink Control Console -->
+        <div class="panel control-panel" id="controlPanel">
+          <div class="panel-header">
+            <h3>
+              <i class="fas fa-gamepad"></i>
+              <span data-i18n="downlinkControl">下行控制控制台</span>
+            </h3>
+          </div>
+          <div class="panel-body control-body">
+            <div class="control-buttons">
+              <button class="control-btn emergency" id="sinkNetBtn">
+                <i class="fas fa-arrow-down"></i>
+                <span data-i18n="sinkNet">一鍵沉網</span>
+              </button>
+              <button class="control-btn action" id="aerationBtn">
+                <i class="fas fa-fan"></i>
+                <span data-i18n="startAeration">啟動曝氣</span>
+              </button>
+              <button class="control-btn warning" id="stopFeedBtn">
+                <i class="fas fa-ban"></i>
+                <span data-i18n="stopFeeding">停止餵食</span>
+              </button>
+            </div>
+            <div class="command-log">
+              <div class="log-header">
+                <span data-i18n="systemLog">系統日誌</span>
+                <span class="log-clear" id="clearLog" data-i18n="clear"
+                  >清除</span
+                >
+              </div>
+              <div class="log-content" id="commandLog">
+                <div class="log-entry">
+                  <span class="log-time">15:22:35</span>
+                  <span class="log-msg" data-i18n="systemInit"
+                    >系統初始化完成</span
+                  >
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <!-- Demo Control (for presentation) -->
+    <div class="demo-controls" id="demoControls">
+      <button class="demo-btn" id="triggerColdWave">
+        <i class="fas fa-snowflake"></i>
+        <span data-i18n="triggerColdWave">觸發寒流情境</span>
+      </button>
+      <button class="demo-btn" id="resetDemo">
+        <i class="fas fa-redo"></i> <span data-i18n="resetDemo">重置演示</span>
+      </button>
+    </div>
+
+    <!-- Scripts -->
+    <script src="js/i18n.js"></script>
+    <script src="js/mockData.js"></script>
+    <script src="js/charts/tempChart.js"></script>
+    <script src="js/charts/doChart.js"></script>
+    <script src="js/charts/feedChart.js"></script>
+    <script src="js/charts/mapChart.js"></script>
+    <script src="js/charts/heartbeatChart.js"></script>
+    <script src="js/charts/densityChart.js"></script>
+    <script src="js/controls/downlink.js"></script>
+    <script src="js/app.js"></script>
+  </body>
+</html>
