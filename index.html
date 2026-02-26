@@ -5,6 +5,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>OceanGuard 多元智慧箱網養殖防災系統</title>
     <link rel="stylesheet" href="css/styles.css" />
+    <!-- Leaflet.js CSS -->
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    />
+    <!-- Leaflet.js -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <!-- ECharts CDN -->
     <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
     <!-- Font Awesome for icons -->
@@ -223,6 +230,16 @@
               <div class="legend-item">
                 <span class="legend-icon cage danger"></span>
                 <span data-i18n="dangerCage">箱網(危險)</span>
+              </div>
+            </div>
+            <!-- Current Speed Legend -->
+            <div class="current-speed-legend">
+              <div>洋流速度 (m/s)</div>
+              <div class="speed-bar"></div>
+              <div class="speed-labels">
+                <span>0.1</span>
+                <span>0.5</span>
+                <span>1.0+</span>
               </div>
             </div>
           </div>

@@ -201,45 +201,96 @@ const MockData = {
    * 生成箱網與船舶位置
    */
   getCagePositions() {
-    // 澎湖附近座標
-    const basePos = { lat: 23.5712, lng: 119.5793 };
+    // 澎湖海域座標（確保全部在海上）
     return {
       vessel: {
-        lat: basePos.lat + 0.02,
-        lng: basePos.lng + 0.01,
+        lat: 23.61,
+        lng: 119.565,
         name: "作業船 01",
       },
       cages: [
         {
           id: "A",
-          lat: basePos.lat,
-          lng: basePos.lng,
+          lat: 23.595,
+          lng: 119.57,
           status: "normal",
           temp: 18.2,
         },
         {
           id: "B",
-          lat: basePos.lat + 0.015,
-          lng: basePos.lng - 0.02,
+          lat: 23.58,
+          lng: 119.47,
           status: this.coldWaveActive ? "warning" : "normal",
           temp: 17.8,
         },
         {
           id: "C",
-          lat: basePos.lat - 0.01,
-          lng: basePos.lng + 0.025,
+          lat: 23.53,
+          lng: 119.63,
           status: "normal",
           temp: 18.5,
         },
         {
           id: "D",
-          lat: basePos.lat - 0.02,
-          lng: basePos.lng - 0.01,
+          lat: 23.49,
+          lng: 119.56,
           status: this.coldWaveActive ? "danger" : "normal",
           temp: 16.5,
         },
       ],
     };
+  },
+
+  /**
+   * 生成澎湖海域洋流場數據
+   * 模擬黑潮支流流經澎湖西側的典型洋流型態
+   */
+  getOceanCurrents() {
+    const currents = [];
+    // 網格範圍：澎湖周圍海域
+    const latMin = 23.3,
+      latMax = 23.85;
+    const lngMin = 119.3,
+      lngMax = 119.9;
+    const step = 0.05;
+
+    for (let lat = latMin; lat <= latMax; lat += step) {
+      for (let lng = lngMin; lng <= lngMax; lng += step) {
+        let direction, speed;
+
+        if (this.coldWaveActive) {
+          // 寒流模式：洋流從北方偏西南流入
+          direction = 200 + (Math.random() - 0.5) * 30; // 偏南流 (度)
+          speed = 0.4 + Math.random() * 0.5;
+          // 北側流速稍強
+          if (lat > 23.6) speed += 0.2;
+        } else {
+          // 正常模式：黑潮分支由南向北，偏東北流
+          const baseDirNE = 30; // 基礎方向：偏東北
+          // 在澎湖西側稍偏北，東側偏東
+          const lngFactor = (lng - 119.55) * 60;
+          direction = baseDirNE + lngFactor + (Math.random() - 0.5) * 20;
+          speed = 0.3 + Math.random() * 0.4;
+          // 在澎湖水道 (119.5~119.65, 23.5~23.7) 附近流速較強
+          if (lng > 119.5 && lng < 119.65 && lat > 23.45 && lat < 23.7) {
+            speed += 0.2 + Math.random() * 0.15;
+          }
+        }
+
+        // 微擾動 (模擬真實流場不規則)
+        direction += Math.sin(lat * 100 + Date.now() * 0.00001) * 8;
+        speed += Math.sin(lng * 80 + Date.now() * 0.000008) * 0.05;
+        speed = Math.max(0.1, Math.min(1.2, speed));
+
+        currents.push({
+          lat: lat,
+          lng: lng,
+          direction: direction % 360,
+          speed: speed,
+        });
+      }
+    }
+    return currents;
   },
 
   /**
